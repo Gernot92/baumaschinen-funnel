@@ -269,3 +269,15 @@
     // form.reset();
   });
 })();
+// ===== Deep-Link: index.html?reserve=bagger öffnet Modal automatisch =====
+(() => {
+  const params = new URLSearchParams(window.location.search);
+  const item = params.get("reserve");
+  if (!item) return;
+
+  // kleinen Moment warten, bis alles im DOM ready ist
+  window.addEventListener("load", () => {
+    const btn = document.querySelector(`button[data-item="${item}"]`);
+    if (btn) btn.click();
+  });
+})();
