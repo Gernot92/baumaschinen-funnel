@@ -1,179 +1,422 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Baumaschinen Oberösterreich – Online Reservierung</title>
+  <style>
+    :root{
+      --bg1:#0b1220;
+      --bg2:#111827;
+      --card:#0f172a;
+      --card2:#0b1326;
+      --text:#e5e7eb;
+      --muted:#aab2c0;
+      --line:rgba(255,255,255,.10);
+      --accent:#22c55e;
+      --accent2:#60a5fa;
+      --danger:#ef4444;
+      --shadow: 0 20px 60px rgba(0,0,0,.45);
+      --radius:16px;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      color:var(--text);
+      background:
+        radial-gradient(1000px 700px at 20% 10%, rgba(96,165,250,.25), transparent 60%),
+        radial-gradient(900px 600px at 80% 30%, rgba(34,197,94,.18), transparent 55%),
+        linear-gradient(180deg, var(--bg1), var(--bg2));
+      min-height:100vh;
+    }
+
+    .wrap{ max-width: 980px; margin: 34px auto; padding: 0 16px 60px; }
+
+    .topbar{
+      display:flex; align-items:flex-end; justify-content:space-between; gap:12px;
+      margin-bottom:18px;
+    }
+    .brand h1{ margin:0; font-size:28px; letter-spacing:.2px; }
+    .brand p{ margin:6px 0 0; color:var(--muted); }
+
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:10px 12px; border:1px solid var(--line);
+      border-radius:999px; background:rgba(255,255,255,.04);
+      color:var(--muted); font-size:13px;
+    }
+    .pill b{ color:var(--text); }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap:16px;
+      align-items:start;
+    }
+    @media (max-width: 960px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card .head{
+      padding:16px 16px 12px;
+      border-bottom:1px solid var(--line);
+      background: rgba(0,0,0,.18);
+    }
+    .card .head h2{ margin:0; font-size:16px; }
+    .card .head p{ margin:6px 0 0; color:var(--muted); font-size:13px; }
+
+    .card .body{ padding:16px; }
+
+    .priceList{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+      margin: 0;
+      padding:0;
+      list-style:none;
+    }
+    .priceItem{
+      border:1px solid var(--line);
+      border-radius: 14px;
+      padding:12px;
+      background: rgba(0,0,0,.14);
+    }
+    .priceItem .title{
+      display:flex; justify-content:space-between; gap:10px; align-items:flex-start;
+      margin-bottom:6px;
+    }
+    .priceItem .title b{ font-size:14px; }
+    .priceItem .title span{
+      font-size:12px; color:var(--muted);
+      border:1px solid var(--line); border-radius:999px;
+      padding:4px 8px; background: rgba(255,255,255,.03);
+      white-space:nowrap;
+    }
+    .priceItem ul{ margin:8px 0 0 18px; color:var(--muted); }
+    .note{
+      margin-top:12px; padding:10px 12px;
+      border:1px dashed rgba(96,165,250,.45);
+      background: rgba(96,165,250,.08);
+      border-radius: 14px;
+      color: #cfe3ff;
+      font-size: 13px;
+    }
+
+    label{ display:block; font-weight:600; margin: 12px 0 6px; }
+    input, select, textarea{
+      width:100%;
+      padding:11px 12px;
+      border-radius: 12px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.22);
+      color:var(--text);
+      outline:none;
+      font-size: 15px;
+    }
+    input::placeholder, textarea::placeholder{ color: rgba(229,231,235,.55); }
+    input:focus, select:focus, textarea:focus{
+      border-color: rgba(96,165,250,.6);
+      box-shadow: 0 0 0 4px rgba(96,165,250,.18);
+    }
+
+    .row{ display:flex; gap:12px; }
+    .row > div{ flex:1; }
+    @media (max-width: 520px){ .row{ flex-direction:column; } }
+
+    .toggleRow{
+      display:flex; flex-wrap:wrap; gap:12px; align-items:center;
+      padding:10px 12px;
+      border:1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(0,0,0,.14);
+    }
+    .toggleRow label{ margin:0; font-weight:600; }
+    .toggleRow .opt{ display:flex; gap:8px; align-items:center; font-weight:500; color:var(--text); }
+    .toggleRow input{ width:auto; }
+
+    .muted{ color:var(--muted); font-size:13px; margin-top:6px; }
+    .hidden{ display:none; }
+
+    .divider{ height:1px; background: var(--line); margin:16px 0; }
+
+    .summaryBox{
+      background: rgba(0,0,0,.18);
+      border:1px solid var(--line);
+      border-radius: 14px;
+      padding:12px;
+    }
+    .summaryBox h3{ margin:0 0 8px; font-size: 14px; }
+    .summary{
+      white-space: pre-line;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 13.5px;
+      color: #e9edf6;
+      line-height:1.35;
+    }
+    .error{
+      margin-top:10px;
+      padding:10px 12px;
+      border:1px solid rgba(239,68,68,.55);
+      background: rgba(239,68,68,.10);
+      border-radius: 12px;
+      color: #ffd3d3;
+      font-size: 13px;
+    }
+
+    .cta{
+      margin-top:14px;
+      width:100%;
+      padding:12px 14px;
+      border-radius: 14px;
+      border:0;
+      background: linear-gradient(90deg, var(--accent), #16a34a);
+      color:#07130b;
+      font-weight:800;
+      font-size:16px;
+      cursor:pointer;
+      box-shadow: 0 10px 30px rgba(34,197,94,.18);
+    }
+    .cta:active{ transform: translateY(1px); }
+
+    .mini{
+      display:flex; gap:10px; flex-wrap:wrap;
+      margin-top:10px;
+      color:var(--muted); font-size:12.5px;
+    }
+    .mini span{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      padding:6px 10px; border-radius:999px;
+    }
+  </style>
+</head>
+
 <body>
   <div class="wrap">
-    <h1>Baumaschinen Oberösterreich</h1>
-    <h2>Online Reservierung</h2>
-
-    <div class="box">
-      <h3>Mietpreise (inkl. MwSt.)</h3>
-      <ul>
-        <li><b>Bagger XCMG 1,8t</b> (Löffel/Böschungslöffel): 150€ / Tag · 600€ / Woche · mit Fahrer: 85€ / Stunde (min. 3h, exkl. Anlieferung)</li>
-        <li><b>Rüttelplatte Lumag</b> Diesel, E-Starter, 200kg: 50€ / Tag · 270€ / Woche</li>
-        <li><b>Zwangsmischer Baron</b> 120l, 380V: 60€ / Tag · 350€ / Woche</li>
-        <li><b>Humbaur Universal Anhänger</b> 4x2m, Nutzlast 2320kg (3t): 50€ / Tag · 300€ / Woche</li>
-      </ul>
-      <p class="hint">Wochenpreis = 7 Tage Nutzung zum Preis von 4 Tagen.</p>
+    <div class="topbar">
+      <div class="brand">
+        <h1>Baumaschinen Oberösterreich</h1>
+        <p>Online Reservierung – schnell, klar, ohne Login</p>
+      </div>
+      <div class="pill">Preise <b>inkl. MwSt.</b> · Anfrage wird <b>per Mail</b> bestätigt</div>
     </div>
 
-    <form id="reserveForm" class="box">
-      <h3>Reservierung</h3>
+    <div class="grid">
+      <!-- LEFT: Preise -->
+      <div class="card">
+        <div class="head">
+          <h2>Mietpreise (inkl. MwSt.)</h2>
+          <p>Wähle Maschine & Mietart – der Gesamtpreis wird automatisch anhand Von/Bis berechnet.</p>
+        </div>
+        <div class="body">
+          <ul class="priceList">
+            <li class="priceItem">
+              <div class="title">
+                <b>🚜 Bagger XCMG 1.8t Löffelset / Böschungslöffel</b>
+                <span>Top-Angebot</span>
+              </div>
+              <ul>
+                <li>150€ pro Tag</li>
+                <li>600€ pro Woche</li>
+                <li>Mit Fahrer: 85€ pro Stunde (min. 3h, exkl. Anlieferung)</li>
+              </ul>
+            </li>
 
-      <label>Maschine</label>
-      <select id="machine" name="maschine" required>
-        <option value="">Bitte wählen…</option>
-        <option value="bagger">Bagger XCMG 1,8t (Löffel/Böschungslöffel)</option>
-        <option value="ruettel">Rüttelplatte Lumag Diesel E-Starter 200kg</option>
-        <option value="mischer">Zwangsmischer Baron 120l 380V</option>
-        <option value="anhaenger">Humbaur Universal Anhänger 4x2m (3t)</option>
-      </select>
+            <li class="priceItem">
+              <div class="title">
+                <b>🧱 Rüttelplatte Lumag Diesel E-Starter 200kg</b>
+                <span>200 kg</span>
+              </div>
+              <ul>
+                <li>50€ pro Tag</li>
+                <li>270€ pro Woche</li>
+              </ul>
+            </li>
 
-      <label>Mietart</label>
-      <select id="tariff" name="mietart" required>
-        <!-- wird per JS dynamisch gefüllt -->
-      </select>
+            <li class="priceItem">
+              <div class="title">
+                <b>🏗️ Zwangsmischer Baron 120l (380V)</b>
+                <span>380V</span>
+              </div>
+              <ul>
+                <li>60€ pro Tag</li>
+                <li>350€ pro Woche</li>
+              </ul>
+            </li>
 
-      <div id="hoursWrap" class="row hidden">
-        <div>
-          <label>Stunden (nur bei “mit Fahrer”)</label>
-          <input id="hours" type="number" min="3" step="1" value="3" name="stunden" />
-          <div class="hint">Mindestbuchung: 3h</div>
+            <li class="priceItem">
+              <div class="title">
+                <b>🚛 Humbaur Universal Anhänger 4×2m (Nutzlast 2320kg / 3t)</b>
+                <span>3t</span>
+              </div>
+              <ul>
+                <li>50€ pro Tag</li>
+                <li>300€ pro Woche</li>
+              </ul>
+            </li>
+          </ul>
+
+          <div class="note">
+            💡 Wochenpreis = 7 Tage Nutzung zum Preis von 4 Tagen (starkes Angebot).
+          </div>
+
+          <div class="mini">
+            <span>Tankregel: voll retour</span>
+            <span>Sonst Tankpauschale: Bagger 35€</span>
+            <span>Rüttelplatte 15€</span>
+          </div>
         </div>
       </div>
 
-      <div class="row">
-        <div>
-          <label>Von</label>
-          <input type="date" name="von" required />
+      <!-- RIGHT: Formular -->
+      <div class="card">
+        <div class="head">
+          <h2>Reservierung anfragen</h2>
+          <p>Lieferung optional · Versicherung/Kaution wählbar · du bekommst eine Mail.</p>
         </div>
-        <div>
-          <label>Bis</label>
-          <input type="date" name="bis" required />
+        <div class="body">
+          <form id="reserveForm">
+            <label>Maschine</label>
+            <select id="machine" name="maschine" required>
+              <option value="">Bitte wählen…</option>
+              <option value="bagger">Bagger XCMG 1.8t Löffelset / Böschungslöffel</option>
+              <option value="ruettel">Rüttelplatte Lumag Diesel E-Starter 200kg</option>
+              <option value="mischer">Zwangsmischer Baron 120l 380V</option>
+              <option value="anhaenger">Humbaur Universal Anhänger 4×2m (3t)</option>
+            </select>
+
+            <label>Mietart</label>
+            <select id="tariff" name="mietart" required>
+              <option value="">Bitte zuerst Maschine wählen…</option>
+            </select>
+
+            <div id="hoursWrap" class="hidden">
+              <label>Stunden (nur bei „mit Fahrer“)</label>
+              <input id="hours" type="number" min="3" step="1" value="3" name="stunden" />
+              <div class="muted">Mindestbuchung: 3 Stunden</div>
+            </div>
+
+            <div class="row">
+              <div>
+                <label>Von</label>
+                <input id="fromDate" type="date" name="von" required />
+              </div>
+              <div>
+                <label>Bis</label>
+                <input id="toDate" type="date" name="bis" required />
+              </div>
+            </div>
+
+            <label>Abholung oder Lieferung?</label>
+            <div class="toggleRow">
+              <div class="opt"><input type="radio" name="modus" value="Abholung" checked /> Abholung</div>
+              <div class="opt"><input type="radio" name="modus" value="Lieferung" /> Lieferung</div>
+            </div>
+
+            <div id="deliveryWrap" class="hidden">
+              <label>Lieferentfernung</label>
+              <select id="delivery" name="lieferung">
+                <option value="0">Bitte wählen…</option>
+                <option value="30">0–20 km → 30€</option>
+                <option value="55">21–40 km → 55€</option>
+                <option value="90">41–70 km → 90€</option>
+                <option value="ASK">Über 70 km → nur auf Anfrage</option>
+              </select>
+
+              <label>Lieferadresse</label>
+              <input type="text" name="lieferadresse" placeholder="Straße, PLZ, Ort" />
+            </div>
+
+            <label>Versicherung / Kaution</label>
+            <div class="toggleRow">
+              <div class="opt"><input type="checkbox" id="insurance" name="versicherung" /> Versicherung gewünscht</div>
+              <div class="opt"><input type="checkbox" id="deposit" name="kaution" /> Kaution statt Versicherung</div>
+            </div>
+            <div class="muted">Preis für Versicherung/Kaution kann später ergänzt werden (optional).</div>
+
+            <label>Kraftstoff</label>
+            <div class="toggleRow">
+              <div class="opt"><input type="checkbox" id="fullTank" name="vollgetankt" checked /> Voll betankt retour</div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="summaryBox">
+              <h3>Zusammenfassung / Preis-Schätzung</h3>
+              <div id="summary" class="summary">Bitte Maschine, Mietart und Datum wählen…</div>
+              <div id="calcError" class="error hidden"></div>
+              <div class="muted">Schätzung inkl. MwSt. · „Über 70 km“ = Preis auf Anfrage.</div>
+            </div>
+
+            <div class="divider"></div>
+
+            <label>Name</label>
+            <input type="text" name="name" required />
+
+            <div class="row">
+              <div>
+                <label>Telefon</label>
+                <input type="tel" name="telefon" required />
+              </div>
+              <div>
+                <label>E-Mail</label>
+                <input type="email" name="email" required />
+              </div>
+            </div>
+
+            <label>Nachricht (optional)</label>
+            <textarea name="nachricht" rows="4" placeholder="z.B. Uhrzeit, Zubehör, Baustelleninfos…"></textarea>
+
+            <button class="cta" type="submit">Reservierung senden</button>
+            <div class="muted">Nächster Schritt: echtes Absenden + Mail an dich + Bestätigung an Kunden.</div>
+          </form>
         </div>
       </div>
-
-      <label>Abholung oder Lieferung?</label>
-      <div class="row">
-        <div class="radio">
-          <label><input type="radio" name="modus" value="Abholung" checked /> Abholung</label>
-          <label><input type="radio" name="modus" value="Lieferung" /> Lieferung</label>
-        </div>
-      </div>
-
-      <div id="deliveryWrap" class="hidden">
-        <label>Lieferentfernung (km)</label>
-        <select id="delivery" name="lieferung_km">
-          <option value="0">Bitte wählen…</option>
-          <option value="30">0–20 km → 30€</option>
-          <option value="55">21–40 km → 55€</option>
-          <option value="90">41–70 km → 90€</option>
-          <option value="ASK">Über 70 km → nur auf Anfrage</option>
-        </select>
-
-        <label>Lieferadresse</label>
-        <input type="text" name="lieferadresse" placeholder="Straße, PLZ, Ort" />
-      </div>
-
-      <label>Versicherung / Kaution</label>
-      <div class="row">
-        <div class="radio">
-          <label><input type="checkbox" id="insurance" name="versicherung" /> Versicherung gewünscht</label>
-          <label><input type="checkbox" id="deposit" name="kaution" /> Kaution statt Versicherung</label>
-        </div>
-      </div>
-      <div class="hint">Du kannst später festlegen, welche Kondition (Versicherung/Kaution) du anbietest.</div>
-
-      <label>Kraftstoff</label>
-      <div class="row">
-        <div class="radio">
-          <label><input type="checkbox" id="fullTank" name="vollgetankt" checked /> Maschine kommt voll betankt zurück</label>
-        </div>
-      </div>
-      <div class="hint">
-        Wenn nicht voll: Tankpauschale Bagger 35€ · Rüttelplatte 15€ (inkl. MwSt.)
-      </div>
-
-      <hr />
-
-      <label>Name</label>
-      <input type="text" name="name" required />
-
-      <div class="row">
-        <div>
-          <label>Telefon</label>
-          <input type="tel" name="telefon" required />
-        </div>
-        <div>
-          <label>E-Mail</label>
-          <input type="email" name="email" required />
-        </div>
-      </div>
-
-      <label>Nachricht (optional)</label>
-      <textarea name="nachricht" rows="4" placeholder="z.B. Zubehör, Uhrzeit, Baustelleninfo…"></textarea>
-
-      <div class="box2">
-        <h4>Zusammenfassung / Preis-Schätzung</h4>
-        <div id="summary" class="summary">Bitte Maschine & Mietart wählen…</div>
-        <div class="hint">Schätzung ohne Anlieferung “auf Anfrage” & ohne Versicherung/Kaution-Preis (falls du das später definierst).</div>
-      </div>
-
-      <button type="submit">Reservierung senden</button>
-      <div class="hint">Derzeit: Formular ist live. Als nächster Schritt bauen wir das Absenden inkl. E-Mails an dich + Kundenbestätigung.</div>
-    </form>
+    </div>
   </div>
 
-  <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; background:#f6f6f6; margin:0; }
-    .wrap { max-width: 720px; margin: 40px auto; padding: 0 16px; }
-    h1 { margin: 0 0 8px; }
-    h2 { margin: 0 0 24px; font-weight: 600; color:#444; }
-    .box { background:#fff; padding:16px; border-radius:12px; box-shadow: 0 6px 18px rgba(0,0,0,.08); margin-bottom: 16px; }
-    .box2 { background:#fafafa; padding:12px; border-radius:10px; border:1px solid #eee; margin-top: 12px; }
-    label { display:block; margin: 10px 0 6px; font-weight:600; }
-    input, select, textarea { width:100%; padding:10px; border-radius:10px; border:1px solid #ddd; font-size: 16px; }
-    .row { display:flex; gap:12px; }
-    .row > div { flex:1; }
-    .radio { display:flex; gap:14px; flex-wrap: wrap; align-items:center; }
-    .radio label { font-weight:500; margin: 0; }
-    button { width:100%; padding:12px; border:0; border-radius:12px; font-size: 16px; font-weight:700; background:#111; color:#fff; margin-top: 12px; cursor:pointer; }
-    hr { border:none; border-top: 1px solid #eee; margin: 16px 0; }
-    .hint { color:#666; font-size: 13px; margin-top: 6px; }
-    .summary { white-space: pre-line; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 14px; }
-    .hidden { display:none; }
-    ul { margin: 8px 0 0 18px; }
-  </style>
-
   <script>
+    // Preise inkl. MwSt.
     const prices = {
       bagger: {
-        label: "Bagger XCMG 1,8t",
+        label: "Bagger XCMG 1.8t Löffelset / Böschungslöffel",
         tariffs: [
-          { key:"tag", label:"Pro Tag – 150€", price:150 },
-          { key:"woche", label:"Pro Woche – 600€", price:600 },
-          { key:"fahrer", label:"Mit Fahrer – 85€/h (min. 3h)", pricePerHour:85, minHours:3 }
+          { key:"tag",   label:"Pro Tag – 150€", pricePerDay:150 },
+          { key:"woche", label:"Pro Woche – 600€", pricePerWeek:600 },
+          { key:"fahrer",label:"Mit Fahrer – 85€/h (min. 3h)", pricePerHour:85, minHours:3 }
         ],
         tankFee: 35
       },
       ruettel: {
-        label: "Rüttelplatte Lumag 200kg",
+        label: "Rüttelplatte Lumag Diesel E-Starter 200kg",
         tariffs: [
-          { key:"tag", label:"Pro Tag – 50€", price:50 },
-          { key:"woche", label:"Pro Woche – 270€", price:270 }
+          { key:"tag",   label:"Pro Tag – 50€", pricePerDay:50 },
+          { key:"woche", label:"Pro Woche – 270€", pricePerWeek:270 }
         ],
         tankFee: 15
       },
       mischer: {
-        label: "Zwangsmischer Baron 120l (380V)",
+        label: "Zwangsmischer Baron 120l 380V",
         tariffs: [
-          { key:"tag", label:"Pro Tag – 60€", price:60 },
-          { key:"woche", label:"Pro Woche – 350€", price:350 }
+          { key:"tag",   label:"Pro Tag – 60€", pricePerDay:60 },
+          { key:"woche", label:"Pro Woche – 350€", pricePerWeek:350 }
         ],
         tankFee: 0
       },
       anhaenger: {
-        label: "Humbaur Universal Anhänger 4x2m (3t)",
+        label: "Humbaur Universal Anhänger 4×2m (3t)",
         tariffs: [
-          { key:"tag", label:"Pro Tag – 50€", price:50 },
-          { key:"woche", label:"Pro Woche – 300€", price:300 }
+          { key:"tag",   label:"Pro Tag – 50€", pricePerDay:50 },
+          { key:"woche", label:"Pro Woche – 300€", pricePerWeek:300 }
         ],
         tankFee: 0
       }
@@ -181,89 +424,153 @@
 
     const machineEl = document.getElementById("machine");
     const tariffEl = document.getElementById("tariff");
+    const fromEl = document.getElementById("fromDate");
+    const toEl = document.getElementById("toDate");
     const hoursWrap = document.getElementById("hoursWrap");
     const hoursEl = document.getElementById("hours");
     const deliveryWrap = document.getElementById("deliveryWrap");
     const deliveryEl = document.getElementById("delivery");
     const fullTankEl = document.getElementById("fullTank");
     const summaryEl = document.getElementById("summary");
+    const calcErrorEl = document.getElementById("calcError");
 
-    function fillTariffs() {
+    function euro(n){
+      return (Math.round(n * 100) / 100).toFixed(2).replace(".", ",") + " €";
+    }
+
+    function isDelivery(){
+      const selected = document.querySelector("input[name='modus']:checked");
+      return selected && selected.value === "Lieferung";
+    }
+
+    // Von/Bis inklusiv: gleicher Tag = 1 Tag
+    function calcDaysInclusive(fromStr, toStr){
+      if(!fromStr || !toStr) return null;
+
+      const from = new Date(fromStr + "T00:00:00");
+      const to = new Date(toStr + "T00:00:00");
+
+      const ms = to.getTime() - from.getTime();
+      if (isNaN(ms)) return null;
+
+      const daysDiff = Math.floor(ms / (1000*60*60*24));
+      if (daysDiff < 0) return -1; // Fehler: bis vor von
+      return daysDiff + 1;
+    }
+
+    function fillTariffs(){
       const m = prices[machineEl.value];
       tariffEl.innerHTML = "";
-      if (!m) {
+      if(!m){
         tariffEl.innerHTML = "<option value=''>Bitte zuerst Maschine wählen…</option>";
         updateSummary();
         return;
       }
       tariffEl.innerHTML = "<option value=''>Bitte wählen…</option>";
-      m.tariffs.forEach(t => {
+      m.tariffs.forEach(t=>{
         const opt = document.createElement("option");
         opt.value = t.key;
         opt.textContent = t.label;
         tariffEl.appendChild(opt);
       });
+      updateHoursUI();
       updateSummary();
     }
 
-    function isDelivery() {
-      const selected = document.querySelector("input[name='modus']:checked");
-      return selected && selected.value === "Lieferung";
-    }
-
-    function updateDeliveryUI() {
+    function updateDeliveryUI(){
       deliveryWrap.classList.toggle("hidden", !isDelivery());
       updateSummary();
     }
 
-    function updateHoursUI() {
+    function updateHoursUI(){
       const m = prices[machineEl.value];
       const tKey = tariffEl.value;
       const show = m && tKey === "fahrer";
       hoursWrap.classList.toggle("hidden", !show);
-      if (show) {
-        const t = m.tariffs.find(x => x.key === "fahrer");
+      if(show){
+        const t = m.tariffs.find(x=>x.key==="fahrer");
         hoursEl.min = t.minHours || 3;
-        if (!hoursEl.value || Number(hoursEl.value) < (t.minHours || 3)) hoursEl.value = (t.minHours || 3);
+        if(!hoursEl.value || Number(hoursEl.value) < (t.minHours || 3)){
+          hoursEl.value = (t.minHours || 3);
+        }
       }
       updateSummary();
     }
 
-    function euro(n) {
-      return (Math.round(n * 100) / 100).toFixed(2).replace(".", ",") + " €";
+    function setError(msg){
+      if(!msg){
+        calcErrorEl.classList.add("hidden");
+        calcErrorEl.textContent = "";
+        return;
+      }
+      calcErrorEl.textContent = msg;
+      calcErrorEl.classList.remove("hidden");
     }
 
-    function updateSummary() {
+    function updateSummary(){
       const m = prices[machineEl.value];
       const tKey = tariffEl.value;
 
-      if (!m) { summaryEl.textContent = "Bitte Maschine wählen…"; return; }
-      if (!tKey) { summaryEl.textContent = "Bitte Mietart wählen…"; return; }
+      setError(null);
+
+      if(!m){
+        summaryEl.textContent = "Bitte Maschine wählen…";
+        return;
+      }
+      if(!tKey){
+        summaryEl.textContent = "Bitte Mietart wählen…";
+        return;
+      }
+
+      const t = m.tariffs.find(x=>x.key===tKey);
+      const days = calcDaysInclusive(fromEl.value, toEl.value);
+
+      // Für Tag/Woche brauchen wir Datum (für Fahrer optional, aber sinnvoll)
+      if((tKey === "tag" || tKey === "woche") && (days === null)){
+        summaryEl.textContent = "Bitte Von/Bis Datum wählen…";
+        return;
+      }
+      if(days === -1){
+        setError("Fehler: Das „Bis“-Datum liegt vor dem „Von“-Datum.");
+        summaryEl.textContent = "Bitte Datum korrigieren…";
+        return;
+      }
 
       let base = 0;
       let details = [];
 
-      const t = m.tariffs.find(x => x.key === tKey);
       details.push("Maschine: " + m.label);
       details.push("Mietart: " + t.label);
 
-      if (tKey === "fahrer") {
+      if(tKey === "fahrer"){
         const h = Math.max(Number(hoursEl.value || 3), t.minHours || 3);
         base = h * t.pricePerHour;
         details.push("Stunden: " + h);
-        details.push("Zwischensumme: " + euro(base));
-      } else {
-        base = t.price;
-        details.push("Zwischensumme: " + euro(base));
+        details.push("Zwischensumme (Fahrer): " + euro(base));
+      }
+
+      if(tKey === "tag"){
+        const d = days;
+        base = d * t.pricePerDay;
+        details.push("Zeitraum: " + d + " Tag(e) (Von/Bis inkl.)");
+        details.push("Miete: " + euro(t.pricePerDay) + " × " + d + " = " + euro(base));
+      }
+
+      if(tKey === "woche"){
+        const d = days;
+        const weeks = Math.ceil(d / 7);
+        base = weeks * t.pricePerWeek;
+        details.push("Zeitraum: " + d + " Tag(e) → " + weeks + " Woche(n) (aufgerundet)");
+        details.push("Miete: " + euro(t.pricePerWeek) + " × " + weeks + " = " + euro(base));
       }
 
       // Lieferung
       let deliveryCost = 0;
-      if (isDelivery()) {
+      if(isDelivery()){
         const v = deliveryEl.value;
-        if (v === "ASK") {
+        if(v === "ASK"){
           details.push("Lieferung: über 70 km → Preis auf Anfrage");
-        } else if (v && v !== "0") {
+        } else if(v && v !== "0"){
           deliveryCost = Number(v);
           details.push("Lieferung: " + euro(deliveryCost));
         } else {
@@ -273,18 +580,19 @@
         details.push("Modus: Abholung");
       }
 
-      // Tank
+      // Tankpauschale
       let tankCost = 0;
-      if (!fullTankEl.checked && m.tankFee > 0) {
+      if(!fullTankEl.checked && m.tankFee > 0){
         tankCost = m.tankFee;
         details.push("Tankpauschale: " + euro(tankCost));
-      } else if (!fullTankEl.checked && m.tankFee === 0) {
+      } else if(!fullTankEl.checked && m.tankFee === 0){
         details.push("Tankpauschale: (nicht relevant)");
       } else {
         details.push("Kraftstoff: voll betankt retour");
       }
 
       const total = base + deliveryCost + tankCost;
+
       details.push("---------------------------");
       details.push("Geschätzter Gesamtpreis: " + euro(total));
       details.push("(inkl. MwSt.)");
@@ -292,332 +600,29 @@
       summaryEl.textContent = details.join("\n");
     }
 
-    machineEl.addEventListener("change", () => { fillTariffs(); updateHoursUI(); });
+    // Events
+    machineEl.addEventListener("change", fillTariffs);
     tariffEl.addEventListener("change", updateHoursUI);
     hoursEl.addEventListener("input", updateSummary);
+    fromEl.addEventListener("change", updateSummary);
+    toEl.addEventListener("change", updateSummary);
     deliveryEl.addEventListener("change", updateSummary);
     fullTankEl.addEventListener("change", updateSummary);
     document.querySelectorAll("input[name='modus']").forEach(r => r.addEventListener("change", updateDeliveryUI));
 
-    // initial
+    // Init
     fillTariffs();
     updateDeliveryUI();
 
-    // submit (vorerst nur demo)
-    document.getElementById("reserveForm").addEventListener("submit", (e) => {
+    // Submit (noch Demo)
+    document.getElementById("reserveForm").addEventListener("submit", (e)=>{
       e.preventDefault();
-      alert("Reservierung erfasst (Demo). Nächster Schritt: E-Mail Versand an dich + Kundenbestätigung.");
-    });
-  </script>
-</body><body>
-  <div class="wrap">
-    <h1>Baumaschinen Oberösterreich</h1>
-    <h2>Online Reservierung</h2>
-
-    <div class="box">
-      <h3>Mietpreise (inkl. MwSt.)</h3>
-      <ul>
-        <li><b>Bagger XCMG 1,8t</b> (Löffel/Böschungslöffel): 150€ / Tag · 600€ / Woche · mit Fahrer: 85€ / Stunde (min. 3h, exkl. Anlieferung)</li>
-        <li><b>Rüttelplatte Lumag</b> Diesel, E-Starter, 200kg: 50€ / Tag · 270€ / Woche</li>
-        <li><b>Zwangsmischer Baron</b> 120l, 380V: 60€ / Tag · 350€ / Woche</li>
-        <li><b>Humbaur Universal Anhänger</b> 4x2m, Nutzlast 2320kg (3t): 50€ / Tag · 300€ / Woche</li>
-      </ul>
-      <p class="hint">Wochenpreis = 7 Tage Nutzung zum Preis von 4 Tagen.</p>
-    </div>
-
-    <form id="reserveForm" class="box">
-      <h3>Reservierung</h3>
-
-      <label>Maschine</label>
-      <select id="machine" name="maschine" required>
-        <option value="">Bitte wählen…</option>
-        <option value="bagger">Bagger XCMG 1,8t (Löffel/Böschungslöffel)</option>
-        <option value="ruettel">Rüttelplatte Lumag Diesel E-Starter 200kg</option>
-        <option value="mischer">Zwangsmischer Baron 120l 380V</option>
-        <option value="anhaenger">Humbaur Universal Anhänger 4x2m (3t)</option>
-      </select>
-
-      <label>Mietart</label>
-      <select id="tariff" name="mietart" required>
-        <!-- wird per JS dynamisch gefüllt -->
-      </select>
-
-      <div id="hoursWrap" class="row hidden">
-        <div>
-          <label>Stunden (nur bei “mit Fahrer”)</label>
-          <input id="hours" type="number" min="3" step="1" value="3" name="stunden" />
-          <div class="hint">Mindestbuchung: 3h</div>
-        </div>
-      </div>
-
-      <div class="row">
-        <div>
-          <label>Von</label>
-          <input type="date" name="von" required />
-        </div>
-        <div>
-          <label>Bis</label>
-          <input type="date" name="bis" required />
-        </div>
-      </div>
-
-      <label>Abholung oder Lieferung?</label>
-      <div class="row">
-        <div class="radio">
-          <label><input type="radio" name="modus" value="Abholung" checked /> Abholung</label>
-          <label><input type="radio" name="modus" value="Lieferung" /> Lieferung</label>
-        </div>
-      </div>
-
-      <div id="deliveryWrap" class="hidden">
-        <label>Lieferentfernung (km)</label>
-        <select id="delivery" name="lieferung_km">
-          <option value="0">Bitte wählen…</option>
-          <option value="30">0–20 km → 30€</option>
-          <option value="55">21–40 km → 55€</option>
-          <option value="90">41–70 km → 90€</option>
-          <option value="ASK">Über 70 km → nur auf Anfrage</option>
-        </select>
-
-        <label>Lieferadresse</label>
-        <input type="text" name="lieferadresse" placeholder="Straße, PLZ, Ort" />
-      </div>
-
-      <label>Versicherung / Kaution</label>
-      <div class="row">
-        <div class="radio">
-          <label><input type="checkbox" id="insurance" name="versicherung" /> Versicherung gewünscht</label>
-          <label><input type="checkbox" id="deposit" name="kaution" /> Kaution statt Versicherung</label>
-        </div>
-      </div>
-      <div class="hint">Du kannst später festlegen, welche Kondition (Versicherung/Kaution) du anbietest.</div>
-
-      <label>Kraftstoff</label>
-      <div class="row">
-        <div class="radio">
-          <label><input type="checkbox" id="fullTank" name="vollgetankt" checked /> Maschine kommt voll betankt zurück</label>
-        </div>
-      </div>
-      <div class="hint">
-        Wenn nicht voll: Tankpauschale Bagger 35€ · Rüttelplatte 15€ (inkl. MwSt.)
-      </div>
-
-      <hr />
-
-      <label>Name</label>
-      <input type="text" name="name" required />
-
-      <div class="row">
-        <div>
-          <label>Telefon</label>
-          <input type="tel" name="telefon" required />
-        </div>
-        <div>
-          <label>E-Mail</label>
-          <input type="email" name="email" required />
-        </div>
-      </div>
-
-      <label>Nachricht (optional)</label>
-      <textarea name="nachricht" rows="4" placeholder="z.B. Zubehör, Uhrzeit, Baustelleninfo…"></textarea>
-
-      <div class="box2">
-        <h4>Zusammenfassung / Preis-Schätzung</h4>
-        <div id="summary" class="summary">Bitte Maschine & Mietart wählen…</div>
-        <div class="hint">Schätzung ohne Anlieferung “auf Anfrage” & ohne Versicherung/Kaution-Preis (falls du das später definierst).</div>
-      </div>
-
-      <button type="submit">Reservierung senden</button>
-      <div class="hint">Derzeit: Formular ist live. Als nächster Schritt bauen wir das Absenden inkl. E-Mails an dich + Kundenbestätigung.</div>
-    </form>
-  </div>
-
-  <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; background:#f6f6f6; margin:0; }
-    .wrap { max-width: 720px; margin: 40px auto; padding: 0 16px; }
-    h1 { margin: 0 0 8px; }
-    h2 { margin: 0 0 24px; font-weight: 600; color:#444; }
-    .box { background:#fff; padding:16px; border-radius:12px; box-shadow: 0 6px 18px rgba(0,0,0,.08); margin-bottom: 16px; }
-    .box2 { background:#fafafa; padding:12px; border-radius:10px; border:1px solid #eee; margin-top: 12px; }
-    label { display:block; margin: 10px 0 6px; font-weight:600; }
-    input, select, textarea { width:100%; padding:10px; border-radius:10px; border:1px solid #ddd; font-size: 16px; }
-    .row { display:flex; gap:12px; }
-    .row > div { flex:1; }
-    .radio { display:flex; gap:14px; flex-wrap: wrap; align-items:center; }
-    .radio label { font-weight:500; margin: 0; }
-    button { width:100%; padding:12px; border:0; border-radius:12px; font-size: 16px; font-weight:700; background:#111; color:#fff; margin-top: 12px; cursor:pointer; }
-    hr { border:none; border-top: 1px solid #eee; margin: 16px 0; }
-    .hint { color:#666; font-size: 13px; margin-top: 6px; }
-    .summary { white-space: pre-line; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 14px; }
-    .hidden { display:none; }
-    ul { margin: 8px 0 0 18px; }
-  </style>
-
-  <script>
-    const prices = {
-      bagger: {
-        label: "Bagger XCMG 1,8t",
-        tariffs: [
-          { key:"tag", label:"Pro Tag – 150€", price:150 },
-          { key:"woche", label:"Pro Woche – 600€", price:600 },
-          { key:"fahrer", label:"Mit Fahrer – 85€/h (min. 3h)", pricePerHour:85, minHours:3 }
-        ],
-        tankFee: 35
-      },
-      ruettel: {
-        label: "Rüttelplatte Lumag 200kg",
-        tariffs: [
-          { key:"tag", label:"Pro Tag – 50€", price:50 },
-          { key:"woche", label:"Pro Woche – 270€", price:270 }
-        ],
-        tankFee: 15
-      },
-      mischer: {
-        label: "Zwangsmischer Baron 120l (380V)",
-        tariffs: [
-          { key:"tag", label:"Pro Tag – 60€", price:60 },
-          { key:"woche", label:"Pro Woche – 350€", price:350 }
-        ],
-        tankFee: 0
-      },
-      anhaenger: {
-        label: "Humbaur Universal Anhänger 4x2m (3t)",
-        tariffs: [
-          { key:"tag", label:"Pro Tag – 50€", price:50 },
-          { key:"woche", label:"Pro Woche – 300€", price:300 }
-        ],
-        tankFee: 0
-      }
-    };
-
-    const machineEl = document.getElementById("machine");
-    const tariffEl = document.getElementById("tariff");
-    const hoursWrap = document.getElementById("hoursWrap");
-    const hoursEl = document.getElementById("hours");
-    const deliveryWrap = document.getElementById("deliveryWrap");
-    const deliveryEl = document.getElementById("delivery");
-    const fullTankEl = document.getElementById("fullTank");
-    const summaryEl = document.getElementById("summary");
-
-    function fillTariffs() {
-      const m = prices[machineEl.value];
-      tariffEl.innerHTML = "";
-      if (!m) {
-        tariffEl.innerHTML = "<option value=''>Bitte zuerst Maschine wählen…</option>";
-        updateSummary();
+      if(calcDaysInclusive(fromEl.value, toEl.value) === -1){
+        setError("Bitte zuerst das Datum korrigieren.");
         return;
       }
-      tariffEl.innerHTML = "<option value=''>Bitte wählen…</option>";
-      m.tariffs.forEach(t => {
-        const opt = document.createElement("option");
-        opt.value = t.key;
-        opt.textContent = t.label;
-        tariffEl.appendChild(opt);
-      });
-      updateSummary();
-    }
-
-    function isDelivery() {
-      const selected = document.querySelector("input[name='modus']:checked");
-      return selected && selected.value === "Lieferung";
-    }
-
-    function updateDeliveryUI() {
-      deliveryWrap.classList.toggle("hidden", !isDelivery());
-      updateSummary();
-    }
-
-    function updateHoursUI() {
-      const m = prices[machineEl.value];
-      const tKey = tariffEl.value;
-      const show = m && tKey === "fahrer";
-      hoursWrap.classList.toggle("hidden", !show);
-      if (show) {
-        const t = m.tariffs.find(x => x.key === "fahrer");
-        hoursEl.min = t.minHours || 3;
-        if (!hoursEl.value || Number(hoursEl.value) < (t.minHours || 3)) hoursEl.value = (t.minHours || 3);
-      }
-      updateSummary();
-    }
-
-    function euro(n) {
-      return (Math.round(n * 100) / 100).toFixed(2).replace(".", ",") + " €";
-    }
-
-    function updateSummary() {
-      const m = prices[machineEl.value];
-      const tKey = tariffEl.value;
-
-      if (!m) { summaryEl.textContent = "Bitte Maschine wählen…"; return; }
-      if (!tKey) { summaryEl.textContent = "Bitte Mietart wählen…"; return; }
-
-      let base = 0;
-      let details = [];
-
-      const t = m.tariffs.find(x => x.key === tKey);
-      details.push("Maschine: " + m.label);
-      details.push("Mietart: " + t.label);
-
-      if (tKey === "fahrer") {
-        const h = Math.max(Number(hoursEl.value || 3), t.minHours || 3);
-        base = h * t.pricePerHour;
-        details.push("Stunden: " + h);
-        details.push("Zwischensumme: " + euro(base));
-      } else {
-        base = t.price;
-        details.push("Zwischensumme: " + euro(base));
-      }
-
-      // Lieferung
-      let deliveryCost = 0;
-      if (isDelivery()) {
-        const v = deliveryEl.value;
-        if (v === "ASK") {
-          details.push("Lieferung: über 70 km → Preis auf Anfrage");
-        } else if (v && v !== "0") {
-          deliveryCost = Number(v);
-          details.push("Lieferung: " + euro(deliveryCost));
-        } else {
-          details.push("Lieferung: bitte km-Bereich auswählen");
-        }
-      } else {
-        details.push("Modus: Abholung");
-      }
-
-      // Tank
-      let tankCost = 0;
-      if (!fullTankEl.checked && m.tankFee > 0) {
-        tankCost = m.tankFee;
-        details.push("Tankpauschale: " + euro(tankCost));
-      } else if (!fullTankEl.checked && m.tankFee === 0) {
-        details.push("Tankpauschale: (nicht relevant)");
-      } else {
-        details.push("Kraftstoff: voll betankt retour");
-      }
-
-      const total = base + deliveryCost + tankCost;
-      details.push("---------------------------");
-      details.push("Geschätzter Gesamtpreis: " + euro(total));
-      details.push("(inkl. MwSt.)");
-
-      summaryEl.textContent = details.join("\n");
-    }
-
-    machineEl.addEventListener("change", () => { fillTariffs(); updateHoursUI(); });
-    tariffEl.addEventListener("change", updateHoursUI);
-    hoursEl.addEventListener("input", updateSummary);
-    deliveryEl.addEventListener("change", updateSummary);
-    fullTankEl.addEventListener("change", updateSummary);
-    document.querySelectorAll("input[name='modus']").forEach(r => r.addEventListener("change", updateDeliveryUI));
-
-    // initial
-    fillTariffs();
-    updateDeliveryUI();
-
-    // submit (vorerst nur demo)
-    document.getElementById("reserveForm").addEventListener("submit", (e) => {
-      e.preventDefault();
-      alert("Reservierung erfasst (Demo). Nächster Schritt: E-Mail Versand an dich + Kundenbestätigung.");
+      alert("Reservierung erfasst (Demo). Nächster Schritt: echtes Absenden + Mail an dich + Bestätigung an Kunden.");
     });
   </script>
 </body>
+</html>
