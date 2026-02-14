@@ -1,11 +1,44 @@
-// script.js
+// script.js — robust + self-diagnose
 (() => {
-  const € = (n) => `${Math.round(n)} €`;
+  // ===== Sichtbares Status-Badge (IMMER) =====
+  const badge = document.createElement("div");
+  badge.style.cssText =
+    "position:fixed;top:18px;right:18px;z-index:2147483647;" +
+    "background:#ff0000;color:#fff;padding:10px 14px;border-radius:10px;" +
+    "font:14px/1.2 system-ui;font-weight:800;box-shadow:0 10px 30px rgba(0,0,0,.35)";
+  badge.textContent = "JS: geladen…";
+  // defer => body existiert
+  document.body.appendChild(badge);
 
-  // Nur auf index.html vorhanden
-  const modal = document.getElementById("modal");
-  const form = document.getElementById("reserveForm");
-  if (!modal || !form) return;
+  const setBadge = (txt) => (badge.textContent = txt);
+
+  const € = (n) => `${Math.round(n)} €`;
+  const parseNum = (v) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : 0;
+  };
+
+  // ===== Elemente (extra tolerant, falls irgendwo Tippfehler sind) =====
+  const modal =
+    document.getElementById("modal") ||
+    document.getElementById("moda1") || // fallback falls typo im Repo ist
+    document.querySelector(".modal");
+
+  const form =
+    document.getElementById("reserveForm") ||
+    document.getElementById("reservForm") || // fallback
+    document.querySelector("form#reserveForm");
+
+  // Wenn Modal/Form nicht existieren, sind wir auf Detailseiten → ok
+  if (!modal || !form) {
+    setBadge("JS: OK (Detailseite)");
+    badge.style.background = "#16a34a";
+    return;
+  }
+
+  // Jetzt sind wir auf index.html
+  setBadge("JS: OK (Index) – warte Klick…");
+  badge.style.background = "#16a34a";
 
   const titleEl = document.getElementById("mTitle");
   const priceHintEl = document.getElementById("mPriceHint");
@@ -30,17 +63,39 @@
   const calcLine = document.getElementById("calcLine");
   const totalPrice = document.getElementById("totalPrice");
 
+  // ===== Harte Validierung: wenn was fehlt, zeigen wir’s im Badge =====
+  const required = [
+    ["mTitle", titleEl],
+    ["mPriceHint", priceHintEl],
+    ["fMaschine", fMaschine],
+    ["fMode", fMode],
+    ["driverOption", driverOption],
+    ["hoursWrap", hoursWrap],
+    ["fHours", fHours],
+    ["dateWrap", dateWrap],
+    ["fFrom", fFrom],
+    ["fTo", fTo],
+    ["fDeliveryType", fDeliveryType],
+    ["kmWrap", kmWrap],
+    ["fKmBand", fKmBand],
+    ["fuelWrap", fuelWrap],
+    ["fFuelNotFull", fFuelNotFull],
+    ["calcLine", calcLine],
+    ["totalPrice", totalPrice],
+  ];
+
+  const missing = required.filter(([, el]) => !el).map(([id]) => id);
+  if (missing.length) {
+    badge.style.background = "#b91c1c";
+    setBadge("JS FEHLT: " + missing.join(", "));
+    // Ohne diese Elemente macht Rechnen/Modal keinen Sinn
+    return;
+  }
+
+  // ===== Logik =====
   let current = null;
+  const DELIVERY_PRICES = [30, 55, 90, null]; // null = auf Anfrage
 
-  // null => "auf Anfrage"
-  const DELIVERY_PRICES = [30, 55, 90, null];
-
-  const parseNum = (v) => {
-    const n = Number(v);
-    return Number.isFinite(n) ? n : 0;
-  };
-
-  // inclusive: von=bis => 1 Tag
   const daysBetweenInclusive = (fromStr, toStr) => {
     if (!fromStr || !toStr) return 0;
     const from = new Date(fromStr + "T00:00:00");
@@ -112,7 +167,6 @@
       }
     }
 
-    // Lieferung
     let deliveryLine = "Abholung";
     let deliveryFee = 0;
 
@@ -130,7 +184,6 @@
       deliveryLine = `Lieferung: + ${€(deliveryFee)}`;
     }
 
-    // Tankpauschale
     let fuelFee = 0;
     let fuelLine = "";
     if (current.fuelSurcharge > 0 && fFuelNotFull.checked) {
@@ -146,10 +199,13 @@
     calcLine.textContent = parts.join(" · ");
   };
 
-  // Robust: Event Delegation für Buttons
+  // ===== Buttons (Event Delegation) =====
   document.addEventListener("click", (e) => {
     const btn = e.target.closest("button[data-item]");
     if (!btn) return;
+
+    setBadge("JS: Klick erkannt ✅");
+    badge.style.background = "#0ea5e9";
 
     current = {
       item: btn.dataset.item,
@@ -173,7 +229,6 @@
     setDriverVisible(current.driverHour > 0);
     setFuelVisible(current.fuelSurcharge);
 
-    // Defaults
     fMode.value = "day";
     hoursWrap.hidden = true;
     dateWrap.hidden = false;
@@ -182,7 +237,6 @@
     setDeliveryVisible();
     fFuelNotFull.checked = false;
 
-    // Default dates
     const today = new Date().toISOString().slice(0, 10);
     if (!fFrom.value) fFrom.value = today;
     if (!fTo.value) fTo.value = today;
@@ -226,7 +280,6 @@
   fKmBand.addEventListener("change", compute);
   fFuelNotFull.addEventListener("change", compute);
 
-  // Submit (noch ohne Backend)
   form.addEventListener("submit", (e) => {
     e.preventDefault();
     alert("Danke! Reservierung erfasst. (Mail/Backend als nächster Schritt)");
