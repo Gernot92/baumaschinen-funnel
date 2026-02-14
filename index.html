@@ -271,7 +271,26 @@
     </div>
   </div>
 
-  <!-- Cache-Busting, damit immer die aktuelle script.js geladen wird -->
-  <script src="./script.js?v=999" defer></script>
+  <!-- JS Loader: zeigt sichtbar, wenn script.js NICHT geladen werden kann -->
+  <script>
+    (function () {
+      var s = document.createElement("script");
+      // Cache-Busting: jede Seite lädt garantiert frisch
+      s.src = "./script.js?ts=" + Date.now();
+      s.defer = true;
+
+      s.onerror = function () {
+        var b = document.createElement("div");
+        b.textContent = "JS FILE ERROR (script.js nicht geladen)";
+        b.style.cssText =
+          "position:fixed;top:18px;right:18px;z-index:2147483647;" +
+          "background:#b91c1c;color:#fff;padding:10px 14px;border-radius:10px;" +
+          "font:14px/1.2 system-ui;font-weight:900;box-shadow:0 10px 30px rgba(0,0,0,.35)";
+        document.documentElement.appendChild(b);
+      };
+
+      document.head.appendChild(s);
+    })();
+  </script>
 </body>
 </html>
