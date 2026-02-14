@@ -7,7 +7,7 @@
     "position:fixed;top:10px;right:10px;z-index:99999;" +
     "background:#111827;color:#fff;padding:6px 10px;border-radius:999px;" +
     "font:12px/1 system-ui;opacity:.8";
-  document.addEventListener("DOMContentLoaded", () => document.body.appendChild(badge));
+  document.body.appendChild(badge);
 
   const € = (n) => `${Math.round(n)} €`;
 
