@@ -2,12 +2,13 @@
 (() => {
   // ===== Mini Debug Badge (zeigt ob JS geladen wurde) =====
   const badge = document.createElement("div");
-  badge.textContent = "JS OK";
-  badge.style.cssText =
-    "position:fixed;top:10px;right:10px;z-index:99999;" +
-    "background:#111827;color:#fff;padding:6px 10px;border-radius:999px;" +
-    "font:12px/1 system-ui;opacity:.8";
-  document.body.appendChild(badge);
+badge.textContent = "JS OK";
+badge.style.cssText =
+  "position:fixed;top:20px;right:20px;z-index:999999;" +
+  "background:#ff0000;color:#ffffff;padding:12px 18px;" +
+  "border-radius:8px;font:16px/1 system-ui;font-weight:700;" +
+  "box-shadow:0 0 20px rgba(0,0,0,0.5);";
+document.body.appendChild(badge);
 
   const € = (n) => `${Math.round(n)} €`;
 
