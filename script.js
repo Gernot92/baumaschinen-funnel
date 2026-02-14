@@ -1,13 +1,16 @@
-// Baumaschinen Funnel – Reservierung/Preislogik
+// script.js
 (() => {
   const € = (n) => `${Math.round(n)} €`;
 
-  // ===== Elemente =====
+  // Elemente
   const modal = document.getElementById("modal");
+  const form = document.getElementById("reserveForm");
+
+  // Wenn wir NICHT auf index.html sind (kein Modal/Form), dann raus
+  if (!modal || !form) return;
+
   const titleEl = document.getElementById("mTitle");
   const priceHintEl = document.getElementById("mPriceHint");
-
-  const form = document.getElementById("reserveForm");
   const fMaschine = document.getElementById("fMaschine");
 
   const fMode = document.getElementById("fMode");
@@ -29,12 +32,25 @@
   const calcLine = document.getElementById("calcLine");
   const totalPrice = document.getElementById("totalPrice");
 
-  // ===== State (aus Button data-*) =====
-  let current = null; // { item,name,day,week,driverHour,driverMinHours,fuelSurcharge }
+  let current = null;
 
-  const DELIVERY_PRICES = [30, 55, 90, 0]; // 0–20, 21–40, 41–70, >70 auf Anfrage (0 = nicht berechenbar)
+  const DELIVERY_PRICES = [30, 55, 90, null]; // null = auf Anfrage
 
-  // ===== Utils =====
+  const parseNum = (v) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : 0;
+  };
+
+  // inclusive: von=bis => 1 Tag
+  const daysBetweenInclusive = (fromStr, toStr) => {
+    if (!fromStr || !toStr) return 0;
+    const from = new Date(fromStr + "T00:00:00");
+    const to = new Date(toStr + "T00:00:00");
+    if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) return 0;
+    const diff = Math.round((to - from) / 86400000);
+    return diff >= 0 ? diff + 1 : 0;
+  };
+
   const openModal = () => {
     modal.classList.add("is-open");
     modal.setAttribute("aria-hidden", "false");
@@ -47,65 +63,25 @@
     document.body.style.overflow = "";
   };
 
-  const parseNum = (v) => {
-    const n = Number(v);
-    return Number.isFinite(n) ? n : 0;
-  };
-
-  // Inclusive day count: Von=2026-02-12, Bis=2026-02-12 => 1 Tag
-  const daysBetweenInclusive = (fromStr, toStr) => {
-    if (!fromStr || !toStr) return 0;
-    const from = new Date(fromStr + "T00:00:00");
-    const to = new Date(toStr + "T00:00:00");
-    if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) return 0;
-    const diff = Math.round((to - from) / 86400000);
-    return diff >= 0 ? diff + 1 : 0;
-  };
-
-  const weeksCeilFromDays = (days) => {
-    if (!days) return 0;
-    return Math.ceil(days / 7);
-  };
-
-  const showDriver = () => {
-    driverOption.hidden = false;
-    if (fMode.value === "driver") {
-      hoursWrap.hidden = false;
-      dateWrap.hidden = true;
-    }
-  };
-
-  const hideDriver = () => {
-    driverOption.hidden = true;
-    if (fMode.value === "driver") fMode.value = "day";
-    hoursWrap.hidden = true;
-    dateWrap.hidden = false;
-  };
-
-  const setFuelVisible = (fuelSurcharge) => {
-    if (fuelSurcharge > 0) {
-      fuelWrap.hidden = false;
-    } else {
-      fuelWrap.hidden = true;
-      fFuelNotFull.checked = false;
-    }
-  };
-
   const setDeliveryVisible = () => {
     const isDelivery = fDeliveryType.value === "delivery";
     kmWrap.hidden = !isDelivery;
     if (!isDelivery) fKmBand.value = "0";
   };
 
-  // ===== Pricing =====
+  const setFuelVisible = (fuelSurcharge) => {
+    const hasFuel = fuelSurcharge > 0;
+    fuelWrap.hidden = !hasFuel;
+    if (!hasFuel) fFuelNotFull.checked = false;
+  };
+
+  const setDriverVisible = (hasDriver) => {
+    driverOption.hidden = !hasDriver;
+    if (!hasDriver && fMode.value === "driver") fMode.value = "day";
+  };
+
   const compute = () => {
     if (!current) return;
-
-    const dayPrice = current.day;
-    const weekPrice = current.week;
-    const driverHour = current.driverHour;
-    const driverMinHours = current.driverMinHours;
-    const fuelSurcharge = current.fuelSurcharge;
 
     const mode = fMode.value;
 
@@ -113,14 +89,15 @@
     let line = "";
 
     if (mode === "driver") {
+      const minH = current.driverMinHours || 3;
       let hours = parseNum(fHours.value);
-      if (hours < driverMinHours) hours = driverMinHours;
+      if (hours < minH) hours = minH;
       fHours.value = String(hours);
-      base = hours * driverHour;
-      line = `${hours} Std × ${€(driverHour)} = ${€(base)} (mit Fahrer)`;
+
+      base = hours * current.driverHour;
+      line = `${hours} Std × ${€(current.driverHour)} = ${€(base)} (mit Fahrer)`;
     } else {
       const days = daysBetweenInclusive(fFrom.value, fTo.value);
-
       if (!days) {
         totalPrice.textContent = "0 €";
         calcLine.textContent = "Bitte Zeitraum wählen (Von/Bis)";
@@ -128,50 +105,52 @@
       }
 
       if (mode === "day") {
-        base = days * dayPrice;
-        line = `${days} Tag(e) × ${€(dayPrice)} = ${€(base)}`;
-      } else if (mode === "week") {
-        const weeks = weeksCeilFromDays(days);
-        base = weeks * weekPrice;
-        line = `${weeks} Woche(n) × ${€(weekPrice)} = ${€(base)} (entspricht ${weeks * 7} Tage)`;
+        base = days * current.day;
+        line = `${days} Tag(e) × ${€(current.day)} = ${€(base)}`;
+      } else {
+        const weeks = Math.max(1, Math.ceil(days / 7));
+        base = weeks * current.week;
+        line = `${weeks} Woche(n) × ${€(current.week)} = ${€(base)}`;
       }
     }
 
-    // Delivery
+    // Lieferung
+    let deliveryLine = "Abholung";
     let deliveryFee = 0;
-    let deliveryLine = "";
+
     if (fDeliveryType.value === "delivery") {
       const band = parseInt(fKmBand.value, 10);
-      deliveryFee = DELIVERY_PRICES[band] ?? 0;
+      const price = DELIVERY_PRICES[band];
 
-      if (band === 3) {
-        deliveryLine = `Lieferung: über 70 km → auf Anfrage`;
-        // keine Berechnung für >70 km
-      } else {
-        deliveryLine = `Lieferung: + ${€(deliveryFee)}`;
+      if (price == null) {
+        // auf Anfrage: Total nicht fix berechenbar
+        calcLine.textContent = `${line} · Lieferung: über 70 km → auf Anfrage`;
+        totalPrice.textContent = "auf Anfrage";
+        return;
       }
+
+      deliveryFee = price;
+      deliveryLine = `Lieferung: + ${€(deliveryFee)}`;
     }
 
-    // Fuel
+    // Tank
     let fuelFee = 0;
     let fuelLine = "";
-    if (fuelSurcharge > 0 && fFuelNotFull.checked) {
-      fuelFee = fuelSurcharge;
+    if (current.fuelSurcharge > 0 && fFuelNotFull.checked) {
+      fuelFee = current.fuelSurcharge;
       fuelLine = `Tankpauschale: + ${€(fuelFee)}`;
     }
 
-    // Total
     const total = base + deliveryFee + fuelFee;
     totalPrice.textContent = €(total);
 
-    const parts = [line];
-    if (deliveryLine) parts.push(deliveryLine);
+    const parts = [line, deliveryLine];
     if (fuelLine) parts.push(fuelLine);
     calcLine.textContent = parts.join(" · ");
   };
 
-  // ===== Bind card buttons =====
-  document.querySelectorAll("button[data-item]").forEach((btn) => {
+  // Buttons binden
+  document.querySelectorAll('button[data-item]').forEach((btn) => {
     btn.addEventListener("click", () => {
       current = {
         item: btn.dataset.item,
@@ -183,58 +162,47 @@
         fuelSurcharge: parseNum(btn.dataset.fuelSurcharge),
       };
 
-      // Fill
-      titleEl.textContent = current.name;
-      fMaschine.value = current.name;
+      titleEl.textContent = current.name || "Maschine";
+      fMaschine.value = current.name || "";
 
-      // Hint
-      const hintParts = [];
-      if (current.day) hintParts.push(`${€(current.day)}/Tag`);
-      if (current.week) hintParts.push(`${€(current.week)}/Woche`);
-      if (current.driverHour) hintParts.push(`${€(current.driverHour)}/Std (min. ${current.driverMinHours}h)`);
-      priceHintEl.textContent = hintParts.join(" · ");
+      const hint = [];
+      if (current.day) hint.push(`${€(current.day)}/Tag`);
+      if (current.week) hint.push(`${€(current.week)}/Woche`);
+      if (current.driverHour) hint.push(`${€(current.driverHour)}/Std (min. ${current.driverMinHours}h)`);
+      priceHintEl.textContent = hint.join(" · ");
 
-      // Driver option only for items with driverHour
-      if (current.driverHour > 0) showDriver();
-      else hideDriver();
-
-      // Fuel checkbox visible only if surcharge exists
+      setDriverVisible(current.driverHour > 0);
       setFuelVisible(current.fuelSurcharge);
 
-      // Default mode
+      // Defaults
       fMode.value = "day";
       hoursWrap.hidden = true;
       dateWrap.hidden = false;
 
-      // Reset some fields
       fDeliveryType.value = "pickup";
       setDeliveryVisible();
-      fKmBand.value = "0";
       fFuelNotFull.checked = false;
 
-      // Dates: set today/tomorrow if empty (makes it easier)
-      const today = new Date();
-      const isoToday = today.toISOString().slice(0, 10);
-      const tomorrow = new Date(today.getTime() + 86400000).toISOString().slice(0, 10);
-      if (!fFrom.value) fFrom.value = isoToday;
-      if (!fTo.value) fTo.value = isoToday;
+      // Default dates setzen
+      const today = new Date().toISOString().slice(0, 10);
+      if (!fFrom.value) fFrom.value = today;
+      if (!fTo.value) fTo.value = today;
 
       openModal();
       compute();
     });
   });
 
-  // Close handlers
+  // Close
   modal.addEventListener("click", (e) => {
     const t = e.target;
-    if (t && t.dataset && t.dataset.close) closeModal();
+    if (t?.dataset?.close) closeModal();
   });
-
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && modal.classList.contains("is-open")) closeModal();
   });
 
-  // Reactivity
+  // Recalc
   fMode.addEventListener("change", () => {
     if (!current) return;
     if (fMode.value === "driver") {
@@ -257,25 +225,20 @@
   fKmBand.addEventListener("change", compute);
   fFuelNotFull.addEventListener("change", compute);
 
-  // Submit – noch ohne Mail (kommt als nächster Schritt)
+  // Submit (noch ohne Backend)
   form.addEventListener("submit", (e) => {
     e.preventDefault();
-
-    // einfache Bestätigung (für jetzt)
-    alert("Danke! Deine Reservierung wurde gespeichert (Mail folgt im nächsten Schritt).");
+    alert("Danke! Reservierung erfasst. (Versand/Backend als nächster Schritt)");
     closeModal();
-
-    // Optional: Formular zurücksetzen
-    // form.reset();
   });
 })();
-// ===== Deep-Link: index.html?reserve=bagger öffnet Modal automatisch =====
+
+// Deep-Link: index.html?reserve=bagger
 (() => {
   const params = new URLSearchParams(window.location.search);
   const item = params.get("reserve");
   if (!item) return;
 
-  // kleinen Moment warten, bis alles im DOM ready ist
   window.addEventListener("load", () => {
     const btn = document.querySelector(`button[data-item="${item}"]`);
     if (btn) btn.click();
