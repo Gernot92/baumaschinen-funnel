@@ -1,12 +1,19 @@
 // script.js
 (() => {
+  // ===== Mini Debug Badge (zeigt ob JS geladen wurde) =====
+  const badge = document.createElement("div");
+  badge.textContent = "JS OK";
+  badge.style.cssText =
+    "position:fixed;top:10px;right:10px;z-index:99999;" +
+    "background:#111827;color:#fff;padding:6px 10px;border-radius:999px;" +
+    "font:12px/1 system-ui;opacity:.8";
+  document.addEventListener("DOMContentLoaded", () => document.body.appendChild(badge));
+
   const € = (n) => `${Math.round(n)} €`;
 
-  // Elemente
+  // Elemente (nur auf index.html vorhanden)
   const modal = document.getElementById("modal");
   const form = document.getElementById("reserveForm");
-
-  // Wenn wir NICHT auf index.html sind (kein Modal/Form), dann raus
   if (!modal || !form) return;
 
   const titleEl = document.getElementById("mTitle");
@@ -33,7 +40,6 @@
   const totalPrice = document.getElementById("totalPrice");
 
   let current = null;
-
   const DELIVERY_PRICES = [30, 55, 90, null]; // null = auf Anfrage
 
   const parseNum = (v) => {
@@ -41,7 +47,6 @@
     return Number.isFinite(n) ? n : 0;
   };
 
-  // inclusive: von=bis => 1 Tag
   const daysBetweenInclusive = (fromStr, toStr) => {
     if (!fromStr || !toStr) return 0;
     const from = new Date(fromStr + "T00:00:00");
@@ -84,7 +89,6 @@
     if (!current) return;
 
     const mode = fMode.value;
-
     let base = 0;
     let line = "";
 
@@ -114,7 +118,6 @@
       }
     }
 
-    // Lieferung
     let deliveryLine = "Abholung";
     let deliveryFee = 0;
 
@@ -123,7 +126,6 @@
       const price = DELIVERY_PRICES[band];
 
       if (price == null) {
-        // auf Anfrage: Total nicht fix berechenbar
         calcLine.textContent = `${line} · Lieferung: über 70 km → auf Anfrage`;
         totalPrice.textContent = "auf Anfrage";
         return;
@@ -133,7 +135,6 @@
       deliveryLine = `Lieferung: + ${€(deliveryFee)}`;
     }
 
-    // Tank
     let fuelFee = 0;
     let fuelLine = "";
     if (current.fuelSurcharge > 0 && fFuelNotFull.checked) {
@@ -149,48 +150,47 @@
     calcLine.textContent = parts.join(" · ");
   };
 
-  // Buttons binden
-  document.querySelectorAll('button[data-item]').forEach((btn) => {
-    btn.addEventListener("click", () => {
-      current = {
-        item: btn.dataset.item,
-        name: btn.dataset.name || "",
-        day: parseNum(btn.dataset.day),
-        week: parseNum(btn.dataset.week),
-        driverHour: parseNum(btn.dataset.driverHour),
-        driverMinHours: parseNum(btn.dataset.driverMinHours) || 3,
-        fuelSurcharge: parseNum(btn.dataset.fuelSurcharge),
-      };
+  // ===== Event Delegation für Buttons (robuster als querySelectorAll) =====
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-item]");
+    if (!btn) return;
 
-      titleEl.textContent = current.name || "Maschine";
-      fMaschine.value = current.name || "";
+    current = {
+      item: btn.dataset.item,
+      name: btn.dataset.name || "",
+      day: parseNum(btn.dataset.day),
+      week: parseNum(btn.dataset.week),
+      driverHour: parseNum(btn.dataset.driverHour),
+      driverMinHours: parseNum(btn.dataset.driverMinHours) || 3,
+      fuelSurcharge: parseNum(btn.dataset.fuelSurcharge),
+    };
 
-      const hint = [];
-      if (current.day) hint.push(`${€(current.day)}/Tag`);
-      if (current.week) hint.push(`${€(current.week)}/Woche`);
-      if (current.driverHour) hint.push(`${€(current.driverHour)}/Std (min. ${current.driverMinHours}h)`);
-      priceHintEl.textContent = hint.join(" · ");
+    titleEl.textContent = current.name || "Maschine";
+    fMaschine.value = current.name || "";
 
-      setDriverVisible(current.driverHour > 0);
-      setFuelVisible(current.fuelSurcharge);
+    const hint = [];
+    if (current.day) hint.push(`${€(current.day)}/Tag`);
+    if (current.week) hint.push(`${€(current.week)}/Woche`);
+    if (current.driverHour) hint.push(`${€(current.driverHour)}/Std (min. ${current.driverMinHours}h)`);
+    priceHintEl.textContent = hint.join(" · ");
 
-      // Defaults
-      fMode.value = "day";
-      hoursWrap.hidden = true;
-      dateWrap.hidden = false;
+    setDriverVisible(current.driverHour > 0);
+    setFuelVisible(current.fuelSurcharge);
 
-      fDeliveryType.value = "pickup";
-      setDeliveryVisible();
-      fFuelNotFull.checked = false;
+    fMode.value = "day";
+    hoursWrap.hidden = true;
+    dateWrap.hidden = false;
 
-      // Default dates setzen
-      const today = new Date().toISOString().slice(0, 10);
-      if (!fFrom.value) fFrom.value = today;
-      if (!fTo.value) fTo.value = today;
+    fDeliveryType.value = "pickup";
+    setDeliveryVisible();
+    fFuelNotFull.checked = false;
 
-      openModal();
-      compute();
-    });
+    const today = new Date().toISOString().slice(0, 10);
+    if (!fFrom.value) fFrom.value = today;
+    if (!fTo.value) fTo.value = today;
+
+    openModal();
+    compute();
   });
 
   // Close
@@ -198,6 +198,7 @@
     const t = e.target;
     if (t?.dataset?.close) closeModal();
   });
+
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && modal.classList.contains("is-open")) closeModal();
   });
@@ -222,10 +223,10 @@
     setDeliveryVisible();
     compute();
   });
+
   fKmBand.addEventListener("change", compute);
   fFuelNotFull.addEventListener("change", compute);
 
-  // Submit (noch ohne Backend)
   form.addEventListener("submit", (e) => {
     e.preventDefault();
     alert("Danke! Reservierung erfasst. (Versand/Backend als nächster Schritt)");
