@@ -276,7 +276,7 @@
     (function () {
       var s = document.createElement("script");
       // Cache-Busting: jede Seite lädt garantiert frisch
-      s.src = "./script.js?ts=" + Date.now();
+      s.src = "/script.js?ts=" + Date.now();
       s.defer = true;
 
       s.onerror = function () {
